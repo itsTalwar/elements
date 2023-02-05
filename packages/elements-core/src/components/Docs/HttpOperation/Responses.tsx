@@ -15,6 +15,7 @@ import {
 import { IHttpOperationResponse } from '@stoplight/types';
 import { sortBy, uniqBy } from 'lodash';
 import * as React from 'react';
+import * as safeJsonStringify from 'safe-json-stringify';
 
 import { useSchemaInlineRefResolver } from '../../../context/InlineRefResolver';
 import { useOptionsCtx } from '../../../context/Options';
@@ -80,7 +81,15 @@ const Response = ({ response, onMediaTypeChange }: ResponseProps) => {
   const { nodeHasChanged } = useOptionsCtx();
 
   const responseContent = contents[chosenContent];
-  const schema = responseContent?.schema;
+  const schema = React.useMemo(() => {
+    let schema = null;
+    try {
+      schema = JSON.parse(JSON.stringify(contents[chosenContent]?.schema));
+    } catch (err) {
+      schema = JSON.parse(safeJsonStringify(contents[chosenContent]?.schema));
+    }
+    return schema;
+  }, [chosenContent, contents]);
 
   React.useEffect(() => {
     responseContent && onMediaTypeChange(responseContent.mediaType);

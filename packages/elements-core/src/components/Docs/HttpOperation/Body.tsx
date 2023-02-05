@@ -2,6 +2,7 @@ import { JsonSchemaViewer } from '@stoplight/json-schema-viewer';
 import { Box, Flex, NodeAnnotation, Select, VStack } from '@stoplight/mosaic';
 import { IHttpOperationRequestBody } from '@stoplight/types';
 import * as React from 'react';
+import * as safeJsonStringify from 'safe-json-stringify';
 
 import { useSchemaInlineRefResolver } from '../../../context/InlineRefResolver';
 import { useOptionsCtx } from '../../../context/Options';
@@ -34,10 +35,20 @@ export const Body = ({ body, onChange }: BodyProps) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chosenContent]);
 
+  const { contents = [], description } = body;
+
+  const schema = React.useMemo(() => {
+    let schema = null;
+    try {
+      schema = JSON.parse(JSON.stringify(contents[chosenContent]?.schema));
+    } catch (err) {
+      schema = JSON.parse(safeJsonStringify(contents[chosenContent]?.schema));
+    }
+    return schema;
+  }, [chosenContent, contents]);
+
   if (isBodyEmpty(body)) return null;
 
-  const { contents = [], description } = body;
-  const schema = contents[chosenContent]?.schema;
   const descriptionChanged = nodeHasChanged?.({ nodeId: body.id, attr: 'description' });
 
   return (
